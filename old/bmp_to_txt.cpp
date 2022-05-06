@@ -3,7 +3,7 @@
 #include <string>
 #include <vector>
 #include <utility>
-const std::string INPUT_BINARY_NAME = "input.bmp";
+const std::string INPUT_BINARY_NAME = "out.dat";
 
 char IntToChar(int n)
 {
