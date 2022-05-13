@@ -9,9 +9,10 @@ public:
 
 	int ass;
 
-	c()
+	c() = default;
+	c(int abs)
 	{
-		ass = 4;
+		ass = abs;
 	}
 	
 };
@@ -19,7 +20,8 @@ public:
 class b
 {
 	int number;
-	c c_with_ass;
+	int temp = 4;
+	c c_with_ass(temp);
 	
 public:
 	b(int n);
