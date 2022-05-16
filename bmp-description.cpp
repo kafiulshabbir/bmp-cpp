@@ -3,20 +3,64 @@
 #include <vector>
 #include <string>
 
+struct colour
+{
+	int r;
+	int g;
+	int b;
+
+	static const int SIZE = 3;
+	
+	colour()
+	{
+		r = 0;
+		g = 0;
+		b = 0;
+	}
+	
+	colour(int red, int green, int blue): r(red), g(green), b(blue) {}
+	
+	std::string binary() const
+	{
+		std::string s(SIZE, '\0');
+		s[0] = b;
+		s[1] = g;
+		s[2] = r;
+		
+		return s;
+	}
+};
+
+const colour black{0, 0, 0};
+const colour grey_dark{64, 64, 64};
+const colour grey{128, 128, 128};
+const colour grey_light{180, 180, 180};;
+const colour white{255, 255, 255};
+const colour brown{128, 0, 0};
+const colour red{255, 0, 0};
+const colour orange{255, 165, 0};
+const colour yellow{255, 255, 0};
+const colour green{0, 255, 0};
+const colour green_dark{0, 128, 0};
+const colour blue{0, 0, 255};
+const colour cyan{0, 255, 255};
+const colour magenta{255, 0, 255};
+const colour purple{128, 0, 128};
+	
 class bmp
 {
 	
 	struct hex
 	{
-		unsigned int info;
-		unsigned int size;
+		int info;
+		int size;
 		
-		unsigned int& operator() ()
+		int& operator() ()
 		{
 			return info;
 		}
 		
-		unsigned int operator() () const
+		int operator() () const
 		{
 			return info;
 		}
@@ -24,7 +68,7 @@ class bmp
 		std::string binary() const
 		{
 			std::string s(size, '\0');
-			for(unsigned int i = 0; i < size; ++ i)
+			for(int i = 0; i < size; ++ i)
 			{
 				s[i] = (info >> (8 * i));
 			}
@@ -33,74 +77,100 @@ class bmp
 		}
 	};
 
-	struct colour
+	
+	
+
+	
+	static const int SIZE_HEADER = 54;
+	static const int SIZE_DIB_HEADER = 40;
+	static const int PADDING_FACTOR = 4;
+	
+	int width;
+	int height;
+	int padding;
+	colour colour_bg;
+	colour colour_fg;
+	
+	std::vector<std::vector<colour>> matrix;
+	
+	int size_bitmap() const
 	{
-		unsigned int blue;
-		unsigned int green;
-		unsigned int red;
-		
-		static const unsigned int size_bytes = 3;
-		
-		std::string binary() const
-		{
-			std::string s(3, '\0');
-			s[0] = blue;
-			s[1] = green;
-			s[2] = red;
-			
-			return s;
-		}
-	};
-	
-	std::string file_name;
+		return height * (width * colour::SIZE + padding);
+	}
 	
 	
-	static const unsigned int bmp_header_size = 54;
-	static const unsigned int padding_factor = 4;
-
-	// BMP Header, size  = 14
-	const hex initial_char_first{'B', 1};
-	const hex initial_char_second{'M', 1};
-	hex total_file_size{0, 4}; //[SIZE]
-	const hex application_specific_gap{0, 4};
-	const hex offset_start_image{bmp_header_size, 4};
+	int size_file() const
+	{
+		return SIZE_HEADER + size_bitmap();
+	}
 	
-	//Dip Header, size = 40
-	const hex dib_header_size{40, 4};
-	hex width_in_pixels{0, 4};
-	hex height_in_pixels{0, 4};
 	
-	unsigned int padding;
-	
-	const hex number_of_colour_planes_used{1, 2};
-	const hex bits{24, 2};
-	const hex compression{0, 4};
-	
-	hex size_raw_bitmap{0, 4}; //[SIZE] if raw bit map data including padding
-	hex resolution_horizontal{2835, 4}; //print resolution in pixel/meter
-	hex resolution_vertical{2835, 4};
-
-	const hex number_of_colours_in_palette{0, 4};
-	const hex important_colours{0, 4}; //0 implies that all col;ours are important
-	
-	static unsigned int pad(unsigned int a,  unsigned int b)
+	static int pad(int a, int b)
 	{
 		return ((a + b - 1) / b ) * b - a;
 	}
 	
-	void update_padding()
+	
+	int determine_padding() const
 	{
-		padding = pad(colour::size_bytes * width_in_pixels(), padding_factor);
+		return pad(colour::SIZE * width, PADDING_FACTOR);
 	}
 	
-	void update_size()
+	
+	template <class T>
+	static std::string binary(const std::vector<T>& vector)
 	{
-		size_raw_bitmap() = ((width_in_pixels() * colour::size_bytes) + padding) * height_in_pixels();
-		total_file_size() = size_raw_bitmap() + bmp_header_size;
+		std::string s;
+		for(const auto& unit: vector)
+		{
+			s += unit.binary();
+		}
+		
+		return s;
 	}
 	
-	std::vector<hex> vector_heading() const
+	/*
+	template <class T>
+	std::string binary(const std::vector< std::vector<T> >& vector)
 	{
+		std::string s;
+		for(const auto& row: vector)
+		{
+			for(const auto& cell: row)
+			{
+				s += unit.binary();
+			}
+		}
+		return s;
+	}
+	*/
+
+	
+	std::vector<hex> head() const
+	{
+		// BMP Header, size  = 14
+		const hex initial_char_first{'B', 1};
+		const hex initial_char_second{'M', 1};
+		const hex total_file_size{size_file(), 4}; //[SIZE]
+		const hex application_specific_gap{0, 4};
+		const hex offset_start_image{SIZE_HEADER, 4};
+		
+		//Dip Header, size = 40
+		const hex dib_header_size{SIZE_DIB_HEADER, 4};
+		const hex width_in_pixels{width, 4};
+		const hex height_in_pixels{height, 4};
+		
+		const hex number_of_colour_planes_used{1, 2};
+		const hex bits{24, 2};
+		const hex compression{0, 4};
+		
+		const hex size_raw_bitmap{0, 4}; //[SIZE] if raw bit map data including padding
+		const hex resolution_horizontal{2835, 4}; //print resolution in pixel/meter
+		const hex resolution_vertical{2835, 4};
+
+		const hex number_of_colours_in_palette{0, 4};
+		const hex important_colours{0, 4}; //0 implies that all col;ours are important
+		
 		std::vector<hex> v(16);
 		
 		v[0] = initial_char_first;
@@ -127,23 +197,11 @@ class bmp
 		return v;
 	}
 	
-	std::string generate_head() const
-	{
-		auto v = vector_heading();
-		std::string s;
-		
-		for(const auto& x: v)
-		{
-			s += x.binary();
-		}
-		
-		return s;
-	}
 	
-	std::string generate_picture() const
+	std::string binary_bitmap() const
 	{
 		std::string s;
-		s.reserve(total_file_size());
+		s.reserve(size_bitmap());
 		for(const auto& row: matrix)
 		{
 			for(const auto& x: row)
@@ -151,68 +209,83 @@ class bmp
 				s += x.binary();
 			}
 			
-			for(unsigned int i = 0; i < padding; ++ i)
-			{
-				s += zero;
-			}
+			s += std::string(padding, '\0');
 		}
 		
 		return s;
 	}
 	
-	std::string give_me_zeros()
+	std::string binary_file() const
 	{
-		hex zero{0, 1};
-		return zero.binary();
+		return binary(head()) + binary_bitmap();
 	}
 	
-	const std::string zero = give_me_zeros();
-	
-	std::vector<std::vector<colour>> matrix;
-	void resize_matrix()
+	void draw_rectangle(int x_from, int y_from, int x_to, int y_to, const colour& draw_colour)
 	{
-		matrix.resize(height_in_pixels(), std::vector<colour>(width_in_pixels(), {255, 0, 255}));
-	}
-	
-	std::string generate_file() const
-	{
-		std::cout << "head size is: " << generate_head().size() << '\n';
-		return generate_head() + generate_picture();
+		int x1 = std::min(x_from, x_to);
+		int x2 = std::max(x_from, x_to);
+		
+		int y1 = std::min(y_from, y_to);
+		int y2 = std::max(y_from, y_to);
+		
+		for(int y = y1; y <= y2; ++ y)
+		{
+			for(int x = x1; x <= x2; ++ x)
+			{
+				matrix[y][x] = draw_colour;
+			}
+		}
 	}
 	
 public:
 	bmp() = delete;
-	bmp(const std::string& bmp_file_name, int width_in_pixels, int height_in_pixels)
+	bmp(int width_in_pixels, int height_in_pixels, const colour& background_fill = white)
 	{
-		file_name = bmp_file_name;
-		this->width_in_pixels() = width_in_pixels;
-		this->height_in_pixels() = height_in_pixels;
-		
-		update_padding();
-		update_size();
-		resize_matrix();
+		width = width_in_pixels;
+		height = height_in_pixels;
+		padding = determine_padding();
+		colour_bg = background_fill;
+		colour_fg = black;
+		matrix.resize(height, std::vector<colour>(width, colour_bg));
 	}
+	
 	
 	~bmp()
 	{
 		save();
 	}
 	
-	void save() const
+	
+	void save(const std::string& name_file_to_save = "out_cpp_bitmap.bmp") const
 	{
-		std::ofstream fout(file_name, std::ios::binary);
-		auto s = generate_file();
+		std::ofstream fout(name_file_to_save, std::ios::binary);
+		auto s = binary_file();
 		fout.write(s.data(), s.size());
 	}
-};
 	
+	void setBgColour(const colour& bg_colour_new)
+	{
+		colour_bg = bg_colour_new;
+	}
+	
+	void setFgColour(const colour& fg_colour_new)
+	{
+		colour_fg = fg_colour_new;
+	}
+	
+	void drawRectangle(int x_from, int y_from, int x_to, int y_to)
+	{
+		draw_rectangle(x_from, y_from, x_to, y_to, colour_fg);
+	}
+	
+	void drawRectangle(int x_from, int y_from, int x_to, int y_to, const colour& draw_colour)
+	{
+		draw_rectangle(x_from, y_from, x_to, y_to, draw_colour);
+	}
+};
 
 int main()
 {
-	bmp a("a.bmp", 2000, 2000);
-		
 	return 0;
 }
-
-
 
