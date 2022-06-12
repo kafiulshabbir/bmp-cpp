@@ -2,239 +2,71 @@
 
 namespace drw
 {
-	std::vector<std::vector<bool>> ascii_matrix(int index)
-	{
-		std::vector<std::vector<bool>> a(128);
-	
-		a['0'] =
-		{
-			1, 1, 1,
-			1, 0, 1,
-			1, 0, 1,
-			1, 0, 1,
-			1, 1, 1
-		};
-		
-		a['1'] =
-		{
-			0, 0, 1,
-			0, 0, 1,
-			0, 0, 1,
-			0, 0, 1,
-			0, 0, 1
-		};
-		
-		a['2'] =
-		{
-			1, 1, 1,
-			0, 0, 1,
-			1, 1, 1,
-			1, 0, 0,
-			1, 1, 1
-		};
-		
-		a['3'] =
-		{
-			1, 1, 1,
-			0, 0, 1,
-			1, 1, 1,
-			0, 0, 1,
-			1, 1, 1
-		};
-		
-		a['4'] =
-		{
-			1, 0, 1,
-			1, 0, 1,
-			1, 1, 1,
-			0, 0, 1,
-			0, 0, 1
-		};
-		
-		a['5'] =
-		{
-			1, 1, 1,
-			1, 0, 0,
-			1, 1, 1,
-			0, 0, 1,
-			1, 1, 1
-		};
-				
-		a['6'] =
-		{
-			1, 1, 1,
-			1, 0, 0,
-			1, 1, 1,
-			1, 0, 1,
-			1, 1, 1
-		};
-		
-				
-		a['7'] =
-		{
-			1, 1, 1,
-			0, 0, 1,
-			0, 0, 1,
-			0, 0, 1,
-			0, 0, 1
-		};
-			
-		a['8'] =
-		{
-			1, 1, 1,
-			1, 0, 1,
-			1, 1, 1,
-			1, 0, 1,
-			1, 1, 1
-		};
-		
-		a['9'] =
-		{
-			1, 1, 1,
-			1, 0, 1,
-			1, 1, 1,
-			0, 0, 1,
-			1, 1, 1
-		};
-		
-		std::vector<bool> b = a[index];
-		
-		std::vector<std::vector<bool>> c;
-		for(int i = 0; i < 5; ++ i)
-		{
-			std::vector<bool> row;
-			for(int j = 0; j < 3; ++ j)
-			{
-				row.push_back(b[i*3 + j]);
-			}
-			c.push_back(row);
-		}
-		
-		return c;
-	}
-	
-	
-	
-	std::string hex::binary() const noexcept
+	//--Class::hex------------------------------------------------------
+	hex::hex(unsigned int value, unsigned int size): value(value), size(size) {}
+	std::string hex::binary() const
 	{
 		std::string s(size, '\0');
 		
-		for(int i = 0; i < size; ++ i)
+		for(unsigned int i = 0; i < size; ++ i)
 		{
-			s[i] = (value >> (length_bytes * i));
+			s[i] = (value >> (size_of_byte * i));
 		}
 		
 		return s;
 	}
-
-	hex::hex() noexcept
+	
+	//--Function-vector<hex> -> binary----------------------------------
+	std::string binary(const std::vector<hex>& vector_hex)
 	{
-		value = 0;
-		size = 0;
-	}
-
-	hex::hex(int value, int size): value(value), size(size)
-	{
-		if(value < 0)
+		std::string string_binary;
+		for(const auto& elem_vector_hex: vector_hex)
 		{
-			throw std::invalid_argument("Value < 0");
-		}
-		if(size < 0 || size > 4)
-		{
-			throw std::invalid_argument("size of hexadecimal is invalid");
-		}
-	}
-
-	vector_hex::vector_hex() = default;
-
-	vector_hex::vector_hex(int length): v(length) {}
-
-	hex& vector_hex::operator [] (int index)
-	{
-		if(index < 0 || index >= v.size())
-		{
-			throw std::out_of_range("index not valid");
+			string_binary += elem_vector_hex.binary();
 		}
 		
-		return v[index];
+		return string_binary;
 	}
 
-	hex vector_hex::operator [] (int index) const
-	{
-		if(index < 0 || index >= v.size())
-		{
-			throw std::out_of_range("index not valid");
-		}
-		
-		return v[index];
-	}
+	//--Class::colour---------------------------------------------------
 
-		
-	void vector_hex::push_back(const hex& e)
-	{
-		v.push_back(e);
-	}
-
-	std::string vector_hex::binary() const
-	{
-		std::string s;
-		for(const auto& x: v)
-		{
-			s += x.binary();
-		}
-		
-		return s;
-	}
-
-	colour::colour()
-	{
-		red = 0;
-		green = 0;
-		blue = 0;
-	}
-
-	bool colour::invalid_colour(int rgb) const noexcept
-	{
-		return rgb < 0 || rgb > max_rgb_val;
-	}
-
-	colour::colour(int red, int green, int blue): red(red), green(green), blue(blue)
-	{
-		if(invalid_colour(red) || invalid_colour(green) || invalid_colour(blue))
-		{
-			throw std::invalid_argument("0 <= rgb < 256");
-		}
-	}
-
+	colour::colour(): red(0), green(0), blue(0) {}
+	colour::colour(unsigned char red, unsigned char green, unsigned char blue): red(red), green(green), blue(blue) {}
 	std::string colour::binary() const
 	{
-		vector_hex v;
-		v.push_back(hex(blue, 1));
-		v.push_back(hex(green, 1));
-		v.push_back(hex(red, 1));
-		
-		return v.binary();
+		return binary(std::vector<hex>{hex(blue, 1), hex(green, 1), hex(red, 1)});
 	}
 
-
-	int bmp::padding() const
+	//--Class::matrix_colours-------------------------------------------
+	matrix_colours::matrix_colours(int height, int width, const colour& bg_colour): matrix(height, std::vector<colour>(width, bg_colour)) {}
+	colour& matrix_colours::operator () (int row, int col)
 	{
-		return ((colour::size_bytes * width + PADDING_FACTOR - 1) / PADDING_FACTOR) * PADDING_FACTOR - colour::size_bytes * width;
+		return matrix[matrix.size() - row - 1][col];
 	}
-
-	int bmp::size_bitmap() const
+	colour matrix_colours::operator () (int row, int col) const
 	{
-		return height * (width * colour::size_bytes + padding());
+		return matrix[matrix.size() - row - 1][col];
 	}
-
-
-	int bmp::size_file() const
+	int matrix_colours::height const
 	{
-		return SIZE_HEADER + size_bitmap();
+		return matrix.size();
 	}
-
-
-
+	int matrix_colours::width() const
+	{
+		return matrix.front().size();
+	}
+	
+	
+	//--Class::bmp------------------------------------------------------
+	///---Constructors--------------------------------------------------
+	bmp::bmp(const std::string& file_name, int height, int width, const colour& bg_colour):
+	file_name(file_name), height(height), width(width), padding(padding_calculate()), bg_colour(bg_colour), fg_colour(black), matrix(height, width, bg_colour){}
+	bmp::~bmp()
+	{
+		save();
+	}
+	
+	///---Binary-generators---------------------------------------------
 	std::string bmp::binary_head() const
 	{
 		// BMP Header, size  = 14
@@ -242,10 +74,10 @@ namespace drw
 		const hex initial_char_second('M', 1);
 		const hex total_file_size(size_file(), 4); //[SIZE]
 		const hex application_specific_gap(0, 4);
-		const hex offset_start_image(SIZE_HEADER, 4);
+		const hex offset_start_image(SIZE_HEADER_BMP, 4);
 		
 		//Dip Header, size = 40
-		const hex dib_header_size(SIZE_DIB_HEADER, 4);
+		const hex dib_header_size(SIZE_DIB_HEADER_BMP, 4);
 		const hex width_in_pixels(width, 4);
 		const hex height_in_pixels(height, 4);
 		
@@ -253,40 +85,21 @@ namespace drw
 		const hex bits(24, 2);
 		const hex compression(0, 4);
 		
-		const hex size_raw_bitmap(0, 4); //[SIZE] if raw bit map data including padding
+		const hex size_raw_bitmap(size_bitmap(), 4); //[SIZE] if raw bit map data including padding
 		const hex resolution_horizontal(2835, 4); //print resolution in pixel/meter
 		const hex resolution_vertical(2835, 4);
 
 		const hex number_of_colours_in_palette(0, 4);
 		const hex important_colours(0, 4); //0 implies that all col;ours are important
 		
-		vector_hex v(16);
+		return binary(vector<hex> v
+		{
+			initial_char_first,	initial_char_second, total_file_size, application_specific_gap,	offset_start_image,		
+			dib_header_size, width_in_pixels, height_in_pixels,	number_of_colour_planes_used, bits,	compression,
+			size_raw_bitmap, vresolution_horizontal, resolution_vertical, number_of_colours_in_palette, important_colours,
+		});
 		
-		v[0] = initial_char_first;
-		v[1] = initial_char_second;
-		v[2] = total_file_size;
-		v[3] = application_specific_gap;
-		v[4] = offset_start_image;
-			
-		v[5] = dib_header_size;
-		v[6] = width_in_pixels;
-		v[7] = height_in_pixels;
-		
-		v[8] = number_of_colour_planes_used;
-		v[9] = bits;
-		v[10] = compression;
-		
-		v[11] = size_raw_bitmap;
-		v[12] = resolution_horizontal;
-		v[13] = resolution_vertical;
-
-		v[14] = number_of_colours_in_palette;
-		v[15] = important_colours;
-
-		return v.binary();
 	}
-
-
 	std::string bmp::binary_bitmap() const
 	{
 		std::string s;
@@ -298,132 +111,109 @@ namespace drw
 				s += x.binary();
 			}
 			
-			s += std::string(padding(), '\0');
+			s += std::string(padding, '\0');
 		}
 		
 		return s;
 	}
-
-	void bmp::check_coordinate(int coordinate, int max) const 
-	{
-		if(coordinate < 0)
-		{
-			throw std::invalid_argument("Negative coordinate.");
-		}
-		if(coordinate >= max)
-		{
-			throw std::invalid_argument("Coordinate out of picture.");
-		}
-	}
-
-	void bmp::check_width(int coordinate) const
-	{
-		check_coordinate(coordinate, width);
-	}
-
-	void bmp::check_height(int coordinate) const
-	{
-		check_coordinate(coordinate, height);
-	}
-
 	std::string bmp::binary() const
 	{
 		return binary_head() + binary_bitmap();
 	}
-
-	int bmp::invert_coordinate(int coordinate) const
-	{
-		return height - coordinate - 1;
-	}
-
-	void bmp::draw_rectangle(int x_from, int y_from, int x_to, int y_to, const colour& draw_colour)
-	{
-		check_width(x_from);
-		check_width(x_to);
-		check_height(y_from);
-		check_height(y_to);
-		
-		int x1 = std::min(x_from, x_to);
-		int x2 = std::max(x_from, x_to);
-		
-		int y1 = std::min(y_from, y_to);
-		int y2 = std::max(y_from, y_to);
-		
-		//y1 = invert_coordinate(y1);
-		//y2 = invert_coordinate(y2);
-		
-		for(int y = y1; y <= y2; ++ y)
-		{
-			for(int x = x1; x <= x2; ++ x)
-			{
-				matrix[y][x] = draw_colour;
-			}
-		}
-	}
-
-	bmp::bmp(const std::string& name_file, int width, int height, const colour& colour_bg): name_file(name_file), width(width), height(height), colour_bg(colour_bg), colour_fg(black), matrix(height, std::vector<colour>(width, colour_bg)){}
-
-	bmp::~bmp()
-	{
-		save();
-	}
-
 	void bmp::save() const
 	{
-		std::ofstream fout(name_file, std::ios::binary);
-		auto s = binary();
+		std::ofstream fout(file_name, std::ios::binary);
+		std::string = binary();
 		fout.write(s.data(), s.size());
 	}
-
-	void bmp::setBgColour(const colour& bg_colour_new)
+	
+	///---Size-generators-----------------------------------------------
+	int bmp::size_bitmap() const
 	{
-		colour_bg = bg_colour_new;
+		return height * (width * colour::size_colour_bytes + padding);
 	}
-
-	void bmp::setFgColour(const colour& fg_colour_new)
+	int bmp::size_file() const
 	{
-		colour_fg = fg_colour_new;
+		return SIZE_HEADER_BMP + size_bitmap();
 	}
-
-	void bmp::drawRectangle(int x_from, int y_from, int x_to, int y_to)
+	int bmp::padding_calculate() const
 	{
-		draw_rectangle(x_from, y_from, x_to, y_to, colour_fg);
-	}
-
-	void bmp::drawRectangle(int x_from, int y_from, int x_to, int y_to, const colour& draw_colour)
-	{
-		draw_rectangle(x_from, y_from, x_to, y_to, draw_colour);
+		return ((colour::size_colour_bytes * width + PADDING_FACTOR_BMP - 1) / PADDING_FACTOR_BMP) * PADDING_FACTOR_BMP - colour::size_colour_bytes * width;
 	}
 	
-	std::vector<std::vector<bool>> bmp::scale_char(const std::vector<std::vector<bool>>& v, int scale)
+	///---Tools---------------------------------------------------------
+	void intercept(int row, int col, const matrix_colours& cover_matrix, bool transperency)
 	{
-		std::vector<std::vector<bool>> matrix_out;
-		matrix_out.reserve(scale * v.size());
-		
-		for(const auto& row: v)
+		for(int i = 0; i < cover_matrix.height(); ++ i)
 		{
-			std::vector<bool> add_row;
-			add_row.reserve(scale * v.front().size());
-			
-			for(auto cell: row)
+			for(int j = 0; j < cover_matrix.width(); ++ j)
 			{
-				for(int i = 0; i < scale; ++ i)
+				if(transperency && cover_matrix(i, j) == bg_colour)
 				{
-					add_row.push_back(cell);
+					continue;
 				}
-			}
-			
-			for(int i = 0; i < scale; ++ i)
-			{
-				matrix_out.push_back(add_row);
+				main_matrix(row + i, col + j) = cover_matrix(i, j);
 			}
 		}
-		
-		std::reverse(matrix_out.begin(), matrix_out.end());
-		
-		return matrix_out;
+	}
+	void bmp::setBgColour(const colour& bg_colour_new)
+	{
+		bg_colour = bg_colour_new;
+	}
+	void bmp::setFgColour(const colour& fg_colour_new)
+	{
+		fg_colour = fg_colour_new;
 	}
 	
+	///---Drawing-------------------------------------------------------
+	void drawRectangle(int row_from, int col_from, int row_to, int col_to)
+	{
+		drawRectangle(row_from, row_to, col_from, col_to, fg_colour);
+	}
+	void bmp::drawRectangle(int row_from, int col_from, int row_to, int col_to, const colour& colour_draw);
+	{
+		int row1 = std::min(row_from, row_to);
+		int row2 = std::max(row_from, row_to);
+		
+		int col1 = std::min(col_from, col_to);
+		int col2 = std::max(col_from, col_to);
+		
+		intercept(row1, col1, matrix_colours(row2 - row1 + 1, col2 - col1 + 1, colour_draw), false);
+	}
+	void drawCentreRectangle(int row_centre, int col_centre, int height, int width)
+	{
+		drawCentreRectangle(row_centre, col_centre, height, width, fg_colour);
+	}
+	void drawCentreRectangle(int row_centre, int col_centre, int height, int width, const colour& colour_draw)
+	{
+		drawRectangle(row_centre - (height - 1) / 2, col_centre - (width - 1) / 2, row_centre + height / 2, col_centre + width / 2, colour_draw);
+	}
+	void drawCentreSquare(int row_centre, int col_centre, int diamension)
+	{
+		drawCentreSquare(int row_centre, int col_centre, int diamension, fg_colour);
+	}
+	void drawCentreSquare(int row_centre, int col_centre, int diamension, const colour& colour_draw)
+	{
+		drawCentreRectangle(row_centre, col_centre, diamension, diamension, colour_draw);
+	}
+	
+	///---Text-------------------------------------------------------
+	matrix_colours bmp::makeChar(int symbol, int scale, const colour& colour_text, const colour& colour_text_back)
+	{
+		const std::vector<bool>& vec_char_bool = drw_text::ascii_bool[c];
+		matrix_colours char_matrix(drw_text::height * scale, drw_text::width * scale, colour_text_back)
+		
+		for(int row = 0; row < char_matrix.height(); ++ row)
+		{
+			for(int col = 0; col < char_matrix.width(); ++ col)
+			{
+				int i = row / drw_text::height;
+				int j = col / drw_text::width;
+				
+				char_matrix(row, col) = 
+		
+		
+	}
 	void bmp::writeChar(int x, int y, int scale, int character, const colour& colour_text)
 	{
 		std::vector<std::vector<bool>> matrix_char = ascii_matrix(character);
@@ -443,20 +233,17 @@ namespace drw
 			++ y;
 		}
 	}
-		
-	
-	void bmp::writeText(int x, int y, int h, const std::string& s)
+	void writeText(int row, int col, int height, const std::string& text)
 	{
-		writeText(x, y, h, s, colour_fg);
+		writeText(row, col, height, text, fg_colour);
 	}
-	
-	void bmp::writeText(int x, int y, int h, const std::string& s, const colour& colour_text)
+	void writeText(int row, int col, int height, const std::string& text, const colour& colour_text)
 	{
-		int scale = h / 5;
-		for(char c: s)
+		int scale = std::min(1, height / drw_text::height);
+		for(char symbol: text)
 		{
-			writeChar(x, y, scale, c, colour_text);
-			x += 4 * scale;
+			writeChar(row, col, scale, symbol, colour_text);
+			col += (drw_text::width + 1) * scale;
 		}
-	}
+	}	
 }
